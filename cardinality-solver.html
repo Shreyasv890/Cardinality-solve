@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interactive Cardinality Problem Solver</title>
+<style>
+:root{--bg:#eef3fa;--card:#fff;--ink:#14213d;--muted:#5b6b86;--navy:#0b2a5b;--accent:#1565d8;--line:#cfd9ea;--ok-bg:#e9f7ec;--ok:#1b7a3a;--warn-bg:#fff4dc;--warn:#9a6200;--err-bg:#fde8e8;--err:#b3261e;--solved:#1b7a3a;--cA:#2f6fe4;--cB:#2ea35a;--cC:#f08a24;--cR:#e0483e;--field:#fff;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1524;--card:#16213a;--ink:#e8eefb;--muted:#9fb0cf;--navy:#12306b;--accent:#5b9bff;--line:#2b3b5c;--ok-bg:#12301d;--ok:#6fd58f;--warn-bg:#3a2d10;--warn:#f0c060;--err-bg:#3d1a1a;--err:#ff9a92;--solved:#6fd58f;--cA:#5b9bff;--cB:#4cc27b;--cC:#ffa94d;--cR:#ff7b72;--field:#0f1a30;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1524;--card:#16213a;--ink:#e8eefb;--muted:#9fb0cf;--navy:#12306b;--accent:#5b9bff;--line:#2b3b5c;--ok-bg:#12301d;--ok:#6fd58f;--warn-bg:#3a2d10;--warn:#f0c060;--err-bg:#3d1a1a;--err:#ff9a92;--solved:#6fd58f;--cA:#5b9bff;--cB:#4cc27b;--cC:#ffa94d;--cR:#ff7b72;--field:#0f1a30;color-scheme:dark}
+html{background:var(--navy);scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4;min-height:100vh}
+header{background:var(--navy);color:#fff;text-align:center;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:2px}
+header h1{margin:0;font-size:1.3rem}
+header p{margin:0;font-weight:600;font-size:.95rem;opacity:.9}
+.logo{width:56px;height:36px}
+main{max-width:980px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:8px;margin-bottom:-1px}
+.tab{flex:1;padding:11px;border:1px solid var(--line);border-bottom:0;background:var(--card);color:var(--muted);border-radius:8px 8px 0 0;font:600 1rem system-ui,sans-serif;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:0 0 10px 10px;overflow:hidden}
+.panel h2{margin:0;background:var(--navy);color:#fff;font-size:1.1rem;padding:10px 14px}
+.body{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;padding:14px}
+.hint{margin:0 0 8px;color:var(--muted);font-size:.9rem}
+.venn{width:100%;max-width:400px;height:auto;display:block;margin:0 auto;cursor:pointer;touch-action:manipulation}
+.ttl{font:700 26px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+.n{font:700 28px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central;fill:var(--ink);pointer-events:none}
+.s3 .n{font-size:21px}
+.n.s{fill:var(--solved)}
+.n.u{fill:var(--muted);font-weight:500}
+.edit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:8px 10px;border:1px dashed var(--accent);border-radius:8px}
+.inputs{background:color-mix(in srgb,var(--accent) 8%,var(--card));border:1px solid var(--line);border-radius:10px;padding:12px;align-self:start}
+.inputs h3{margin:0 0 2px;font-size:1.05rem}
+.inputs label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0;font-weight:500}
+input[type=number]{width:96px;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink)}
+button{font:600 1rem system-ui,sans-serif;border:0;border-radius:8px;padding:11px 14px;cursor:pointer}
+.go{width:100%;margin-top:8px;background:var(--accent);color:#fff}
+.reset{margin-top:8px;background:var(--ok);color:var(--card)}
+.edit button{padding:7px 12px;background:var(--accent);color:#fff}
+button:focus-visible,input:focus-visible,.tab:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.res{margin:0 14px 14px;padding:12px 14px;border:1px solid var(--line);border-radius:10px}
+.res:empty{display:none}
+.res h3{margin:0 0 6px;font-size:1.1rem}
+.res h4{margin:14px 0 4px}
+.res p{margin:4px 0}
+.res.ok{background:var(--ok-bg);border-color:var(--ok)}.res.ok h3{color:var(--ok)}
+.res.warn{background:var(--warn-bg);border-color:var(--warn)}.res.warn h3{color:var(--warn)}
+.res.err{background:var(--err-bg);border-color:var(--err)}.res.err h3{color:var(--err)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px;margin-top:8px}
+.it{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:6px;background:var(--card);border:1px solid var(--line)}
+.it.s b{color:var(--solved)}.it.u b{color:var(--muted)}
+.legend{font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 3px 0 8px;vertical-align:baseline}
+.legend .g{background:var(--ink)}.legend .s{background:var(--solved)}.legend .u{background:var(--muted)}
+ol{margin:0;padding-left:22px;font-family:Cambria,"Times New Roman",serif;font-size:1.05rem}
+li{margin:8px 0}
+</style>
+</head>
+<body>
+<header>
+<svg class="logo" viewBox="0 0 64 40" aria-hidden="true"><circle cx="22" cy="20" r="15" fill="none" stroke="#f6a623" stroke-width="3"/><circle cx="42" cy="20" r="15" fill="none" stroke="#7fb0ff" stroke-width="3"/></svg>
+<h1>Interactive Cardinality Problem Solver</h1>
+<p>Solve • Calculate • Learn</p>
+</header>
+<main>
+<nav class="tabs" role="tablist">
+<button class="tab" role="tab" data-tab="2" aria-selected="true">Two Sets</button>
+<button class="tab" role="tab" data-tab="3" aria-selected="false">Three Sets</button>
+</nav>
+<section class="panel" id="p2"></section>
+<section class="panel" id="p3" hidden></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const N={
+2:{tA:'n(A)',tB:'n(B)',tAB:'n(A ∩ B)',tU:'n(A ∪ B)',oA:'n(A only)',oB:'n(B only)'},
+3:{tA:'n(A)',tB:'n(B)',tC:'n(C)',tAB:'n(A ∩ B)',tAC:'n(A ∩ C)',tBC:'n(B ∩ C)',tABC:'n(A ∩ B ∩ C)',tU:'n(A ∪ B ∪ C)',oA:'n(A only)',oB:'n(B only)',oC:'n(C only)',oAB:'n(A ∩ B only)',oAC:'n(A ∩ C only)',oBC:'n(B ∩ C only)'}};
+const ORD={2:['tA','tB','tAB','tU','oA','oB'],3:['oA','oB','oC','oAB','oAC','oBC','tABC','tU','tA','tB','tC','tAB','tAC','tBC']};
+const FIELDS={2:['tA','tB','tAB','tU'],3:['tA','tB','tC','tAB','tAC','tBC','tABC','tU']};
+/* Each equation: LHS = sum of coef × variable */
+const EQ={
+2:[['tU',[[1,'tA'],[1,'tB'],[-1,'tAB']]],
+   ['tA',[[1,'oA'],[1,'tAB']]],
+   ['tB',[[1,'oB'],[1,'tAB']]],
+   ['tU',[[1,'oA'],[1,'oB'],[1,'tAB']]]],
+3:[['tA',[[1,'oA'],[1,'oAB'],[1,'oAC'],[1,'tABC']]],
+   ['tB',[[1,'oB'],[1,'oAB'],[1,'oBC'],[1,'tABC']]],
+   ['tC',[[1,'oC'],[1,'oAC'],[1,'oBC'],[1,'tABC']]],
+   ['tAB',[[1,'oAB'],[1,'tABC']]],
+   ['tAC',[[1,'oAC'],[1,'tABC']]],
+   ['tBC',[[1,'oBC'],[1,'tABC']]],
+   ['tU',[[1,'tA'],[1,'tB'],[1,'tC'],[-1,'tAB'],[-1,'tAC'],[-1,'tBC'],[1,'tABC']]],
+   ['tU',[[1,'oA'],[1,'oB'],[1,'oC'],[1,'oAB'],[1,'oAC'],[1,'oBC'],[1,'tABC']]]]};
+const GEO={
+2:{c:[{x:125,y:125,r:88,k:'--cA',l:'A',lx:52,ly:38},{x:235,y:125,r:88,k:'--cR',l:'B',lx:308,ly:38}],
+   r:[['oA',82,125],['tAB',180,125],['oB',278,125]],
+   map:{'10':'oA','01':'oB','11':'tAB'},vb:'0 0 360 240'},
+3:{c:[{x:180,y:112,r:82,k:'--cA',l:'A',lx:180,ly:16},{x:132,y:200,r:82,k:'--cB',l:'B',lx:40,ly:292},{x:228,y:200,r:82,k:'--cC',l:'C',lx:320,ly:292}],
+   r:[['oA',180,62],['oB',88,230],['oC',272,230],['oAB',130,148],['oAC',230,148],['oBC',180,248],['tABC',180,185]],
+   map:{'100':'oA','010':'oB','001':'oC','110':'oAB','101':'oAC','011':'oBC','111':'tABC'},vb:'0 0 360 320'}};
+const S={2:{g:{},sel:null,res:null},3:{g:{},sel:null,res:null}};
+
+const fmt=(ts,f)=>ts.map(([c,x],i)=>(i?(c<0?' − ':' + '):(c<0?'−':''))+f(x)).join('');
+
+function solve(m,g){
+  const v={},given=[],bad=[],steps=[],errs=[];
+  for(const k in g){
+    if(g[k]==='')continue;
+    const x=Number(g[k]);
+    if(Number.isInteger(x)&&x>=0){v[k]=x;given.push(k)}else bad.push(k);
+  }
+  const unkOf=()=>ORD[m].filter(k=>!(k in v));
+  if(bad.length)return{v,given,steps,errs:['Use whole numbers (0 or more) for: '+bad.map(k=>N[m][k]).join(', ')+'.'],unk:[]};
+  if(!given.length)return{v,given,steps,errs:[],unk:unkOf(),empty:true};
+  let changed=true;
+  while(changed){
+    changed=false;
+    for(const [L,R] of EQ[m]){
+      const un=[L,...R.map(r=>r[1])].filter(x=>!(x in v));
+      if(un.length!==1)continue;
+      const t=un[0];
+      let terms;
+      if(t===L)terms=R.map(r=>[r[0],r[1]]);
+      else{
+        const ct=R.find(r=>r[1]===t)[0];
+        terms=[[1,L],...R.filter(r=>r[1]!==t).map(r=>[-r[0],r[1]])].map(([c,x])=>[c*ct,x]);
+      }
+      terms.sort((a,b)=>b[0]-a[0]);
+      const val=terms.reduce((s,[c,x])=>s+c*v[x],0);
+      steps.push({t,sym:fmt(terms,x=>N[m][x]),num:fmt(terms,x=>v[x]),val});
+      v[t]=val;changed=true;
+      if(val<0)errs.push(N[m][t]+' works out to '+val+', which is impossible. Check your values.');
+    }
+  }
+  for(const [L,R] of EQ[m]){
+    if([L,...R.map(r=>r[1])].every(x=>x in v)){
+      const sum=R.reduce((s,[c,x])=>s+c*v[x],0);
+      if(sum!==v[L]){errs.push('Values contradict each other: '+N[m][L]+' = '+fmt(R,x=>v[x])+' = '+sum+', but '+N[m][L]+' is '+v[L]+'.');break}
+    }
+  }
+  return{v,given,steps,errs,unk:unkOf()};
+}
+
+function draw(m){
+  const s=S[m],G=GEO[m],r=s.res;
+  let h=G.c.map(c=>`<circle cx="${c.x}" cy="${c.y}" r="${c.r}" fill="var(${c.k})" fill-opacity=".27" stroke="var(${c.k})" stroke-width="3"/><text class="ttl" x="${c.lx}" y="${c.ly}" fill="var(${c.k})">${c.l}</text>`).join('');
+  for(const [k,x,y] of G.r){
+    const gv=s.g[k],has=gv!==undefined&&gv!=='';
+    let t='?',cl='u';
+    if(r&&k in r.v&&!r.errs.length){t=r.v[k];cl=has?'g':'s'}
+    else if(has){t=gv;cl='g'}
+    if(s.sel===k)h+=`<circle cx="${x}" cy="${y}" r="${m==2?26:20}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>`;
+    h+=`<text class="n ${cl}" x="${x}" y="${y}">${t}</text>`;
+  }
+  $('svg'+m).innerHTML=h;
+}
+
+function showRes(m){
+  const r=S[m].res,el=$('res'+m);
+  if(!r){el.className='res';el.innerHTML='';return}
+  let cls='ok',title='✔ Results',msg='',body='';
+  if(r.errs.length){cls='err';title='✖ Check your values';msg=r.errs.map(e=>`<p>${e}</p>`).join('')}
+  else if(r.empty){cls='warn';title='Nothing to solve yet';msg='<p>Enter some known values or tap regions in the diagram, then try again.</p>'}
+  else{
+    if(r.unk.length){cls='warn';title='⚠ Not enough information';msg=`<p>Still unknown: ${r.unk.map(k=>N[m][k]).join(', ')}. Enter more known values.</p>`}
+    body=`<div class="grid">${ORD[m].map(k=>{const has=k in r.v,cl=!has?'u':r.given.includes(k)?'g':'s';return `<div class="it ${cl}"><span>${N[m][k]}</span><b>${has?r.v[k]:'?'}</b></div>`}).join('')}</div>
+<p class="legend"><i class="g"></i>given<i class="s"></i>solved<i class="u"></i>unknown</p>
+<h4>Step-by-step solution</h4>`+(r.steps.length?`<ol>${r.steps.map(p=>`<li>${N[m][p.t]} = ${p.sym}<br>= ${p.num}<br>= <b>${p.val}</b></li>`).join('')}</ol>`:'<p>Every value was already given.</p>');
+  }
+  el.className='res '+cls;
+  el.innerHTML=`<h3>${title}</h3>${msg}${body}`;
+}
+
+function run(m){
+  S[m].res=solve(m,S[m].g);
+  draw(m);showRes(m);
+  $('res'+m).scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function sync(m){
+  document.querySelectorAll(`input[data-m="${m}"]`).forEach(i=>{
+    if(i.dataset.k&&i!==document.activeElement)i.value=S[m].g[i.dataset.k]??'';
+  });
+}
+
+function openEd(m,k){
+  const s=S[m],i=$('edi'+m);
+  s.sel=k;
+  $('ed'+m).hidden=false;
+  $('edl'+m).textContent=N[m][k]+' =';
+  i.dataset.k=k;i.value=s.g[k]??'';
+  draw(m);i.focus();
+}
+
+function panel(m){
+  return `<h2>${m==2?'Two':'Three'}-Set Venn Diagram</h2>
+<div class="body">
+<div>
+<p class="hint">Tap a region to enter its value, or enter known values.</p>
+<svg class="venn ${m==3?'s3':''}" id="svg${m}" data-m="${m}" viewBox="${GEO[m].vb}" role="img" aria-label="${m}-set Venn diagram"></svg>
+<div class="edit" id="ed${m}" hidden><b id="edl${m}"></b><input id="edi${m}" type="number" inputmode="numeric" min="0" step="1" data-m="${m}" data-k="" aria-label="Region value"><button data-act="done" data-m="${m}">Done</button></div>
+</div>
+<div class="inputs">
+<h3>Known Values</h3>
+<p class="hint">You can leave any blank.</p>
+${FIELDS[m].map(k=>`<label>${N[m][k]}<input type="number" inputmode="numeric" min="0" step="1" data-m="${m}" data-k="${k}"></label>`).join('')}
+<button class="go" data-act="solve" data-m="${m}">${m==2?'Find Missing Values':'Calculate'}</button>
+<button class="reset" data-act="reset" data-m="${m}">Reset</button>
+</div>
+</div>
+<div class="res" id="res${m}"></div>`;
+}
+
+[2,3].forEach(m=>{$('p'+m).innerHTML=panel(m);draw(m)});
+
+document.addEventListener('input',e=>{
+  const t=e.target,k=t.dataset&&t.dataset.k;
+  if(!k)return;
+  const m=+t.dataset.m,s=S[m];
+  if(t.value==='')delete s.g[k];else s.g[k]=t.value;
+  s.res=null;sync(m);draw(m);showRes(m);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.m&&e.target.tagName==='INPUT')run(+e.target.dataset.m);
+});
+document.addEventListener('click',e=>{
+  const tab=e.target.closest('[data-tab]');
+  if(tab){
+    document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',b===tab));
+    [2,3].forEach(n=>{$('p'+n).hidden=n!=tab.dataset.tab});
+    return;
+  }
+  const sv=e.target.closest('.venn');
+  if(sv){
+    const m=+sv.dataset.m,G=GEO[m],rc=sv.getBoundingClientRect(),k=sv.viewBox.baseVal.width/rc.width;
+    const x=(e.clientX-rc.left)*k,y=(e.clientY-rc.top)*k;
+    const key=G.map[G.c.map(c=>(x-c.x)**2+(y-c.y)**2<=c.r*c.r?1:0).join('')];
+    if(key)openEd(m,key);
+    return;
+  }
+  const b=e.target.closest('[data-act]');
+  if(!b)return;
+  const m=+b.dataset.m,s=S[m];
+  if(b.dataset.act==='solve')run(m);
+  else if(b.dataset.act==='done'){s.sel=null;$('ed'+m).hidden=true;draw(m)}
+  else if(b.dataset.act==='reset'){
+    S[m]={g:{},sel:null,res:null};
+    document.querySelectorAll(`input[data-m="${m}"]`).forEach(i=>i.value='');
+    $('ed'+m).hidden=true;draw(m);showRes(m);
+  }
+});
+</script>
+</body>
+</html>
